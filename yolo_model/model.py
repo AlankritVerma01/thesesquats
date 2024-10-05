@@ -1,5 +1,4 @@
-pip install ultralytics
-
+from ultralytics import YOLO
 
 def get_model():
     return YOLO("yolo11n-pose.pt")
@@ -7,5 +6,5 @@ def get_model():
 
 def get_pose(image_path):
     model = get_model()
-    result = model(image_path)
+    result = model.predict(source = image_path)
     return result
