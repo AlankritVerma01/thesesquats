@@ -1,17 +1,12 @@
 import numpy as np
-# Key Metrics Included:
-# Elbow Angle: Measures flexion/extension of both elbows.
-# Knee Angle: Measures flexion/extension of both knees.
-# Hip Angle: Measures the angle at the hips, important for exercises like squats.
-# Shoulder Flexion: Measures flexion at the shoulder joint.
-# Spine Angle: Measures the alignment and curvature of the spine.
-# Ankle Dorsiflexion: Measures the ankle movement, important for tracking squat depth or running posture.
-# Joint Distances: Includes shoulder width, hip width, and spine length, which can help monitor posture during exercises.
+
+# Key Metrics:
+# Elbow Angle, Knee Angle, Hip Angle, Shoulder Flexion, Spine Angle, Ankle Dorsiflexion
+# Joint Distances: Shoulder width, Hip width, Spine length
 
 def calculate_angle(point1, point2, point3):
     """
     Calculate the angle between three keypoints.
-    Points should be in the format (x, y) representing the keypoint locations.
     The angle is calculated at point2, where vector1 = point1 - point2 and vector2 = point3 - point2.
     """
     p1, p2, p3 = np.array(point1), np.array(point2), np.array(point3)
@@ -61,10 +56,11 @@ def calculate_joint_angles(keypoints):
     if is_valid_keypoint(keypoints[5]) and is_valid_keypoint(keypoints[11]) and is_valid_keypoint(keypoints[13]):
         joint_angles['Left Hip'] = calculate_angle(keypoints[5][:2], keypoints[11][:2], keypoints[13][:2])
 
-    # Shoulder Flexion (hip, shoulder, elbow)
+    # Right Shoulder Flexion (hip, shoulder, elbow)
     if is_valid_keypoint(keypoints[12]) and is_valid_keypoint(keypoints[6]) and is_valid_keypoint(keypoints[8]):
         joint_angles['Right Shoulder Flexion'] = calculate_angle(keypoints[12][:2], keypoints[6][:2], keypoints[8][:2])
 
+    # Left Shoulder Flexion (hip, shoulder, elbow)
     if is_valid_keypoint(keypoints[11]) and is_valid_keypoint(keypoints[5]) and is_valid_keypoint(keypoints[7]):
         joint_angles['Left Shoulder Flexion'] = calculate_angle(keypoints[11][:2], keypoints[5][:2], keypoints[7][:2])
 
@@ -72,24 +68,27 @@ def calculate_joint_angles(keypoints):
     if is_valid_keypoint(keypoints[6]) and is_valid_keypoint(keypoints[12]) and is_valid_keypoint(keypoints[11]):
         joint_angles['Spine Angle'] = calculate_angle(keypoints[6][:2], keypoints[12][:2], keypoints[11][:2])
 
-    # Ankle Dorsiflexion (knee, ankle, toes)
-    if is_valid_keypoint(keypoints[14]) and is_valid_keypoint(keypoints[16]) and is_valid_keypoint(keypoints[20]):
-        joint_angles['Right Ankle Dorsiflexion'] = calculate_angle(keypoints[14][:2], keypoints[16][:2], keypoints[20][:2])
+    # # Right Ankle Dorsiflexion (knee, ankle, toes)
+    # if is_valid_keypoint(keypoints[14]) and is_valid_keypoint(keypoints[16]) and is_valid_keypoint(keypoints[20]):
+    #     joint_angles['Right Ankle Dorsiflexion'] = calculate_angle(keypoints[14][:2], keypoints[16][:2], keypoints[20][:2])
 
-    if is_valid_keypoint(keypoints[13]) and is_valid_keypoint(keypoints[15]) and is_valid_keypoint(keypoints[19]):
-        joint_angles['Left Ankle Dorsiflexion'] = calculate_angle(keypoints[13][:2], keypoints[15][:2], keypoints[19][:2])
+    # # Left Ankle Dorsiflexion (knee, ankle, toes)
+    # if is_valid_keypoint(keypoints[13]) and is_valid_keypoint(keypoints[15]) and is_valid_keypoint(keypoints[19]):
+    #     joint_angles['Left Ankle Dorsiflexion'] = calculate_angle(keypoints[13][:2], keypoints[15][:2], keypoints[19][:2])
 
     return joint_angles
 
 def calculate_distance(point1, point2):
-    """Calculates the Euclidean distance between two points (x, y)."""
+    """
+    Calculates the Euclidean distance between two points (x, y).
+    """
     p1, p2 = np.array(point1), np.array(point2)
     return np.linalg.norm(p1 - p2)
 
 def calculate_joint_distances(keypoints):
     """
-    Calculate the distances between key joints that might be useful for analysis,
-    such as hip-shoulder width, shoulder-knee distance, etc.
+    Calculate the distances between key joints such as hip-shoulder width, shoulder-knee distance, etc.
+    Useful for analyzing overall posture.
     """
     joint_distances = {}
 

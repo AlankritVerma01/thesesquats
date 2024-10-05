@@ -1,7 +1,8 @@
 from ultralytics import YOLO
 
-def get_model():
-    return YOLO("yolo11n-pose.pt")
+def get_model_yolo():
+    model = YOLO("yolo11n-pose.pt")
+    return model
 
 
 def get_pose(image_path):

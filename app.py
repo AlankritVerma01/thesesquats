@@ -2,14 +2,21 @@ import streamlit as st
 import cv2
 from utils.model_utils import get_model, get_keypoints_from_frame
 from utils.angle_utils import calculate_joint_angles
-from utils.exercise_rules import check_exercise_form
 from utils.video_utils import save_video, plot_joint_angles
+from utils.exercise_rules import check_exercise_form
+from utils.feedback_utils import FeedbackManager  # Import the feedback manager
 
 # Load YOLO model
 model = get_model()
+ 
+# Instantiate feedback manager
+feedback_manager = FeedbackManager()
 
 # Streamlit UI
 st.title("Comprehensive Joint Monitoring and Exercise Form Analysis")
+
+# Select exercise type
+exercise_type = st.selectbox("Select an exercise for analysis", ['Pull-up', 'Squat', 'Bench Press', 'Easy Exercise'])
 
 # Upload video file
 uploaded_video = st.file_uploader("Upload a video for analysis", type=["mp4", "avi", "mov"])
@@ -29,12 +36,12 @@ if uploaded_video is not None:
         'Left Knee': [],
         'Right Hip': [],
         'Left Hip': [],
-        'Shoulder Flexion': [],
+        'Right Shoulder Flexion': [],
+        'Left Shoulder Flexion': [],
         'Spine Angle': [],
-        'Ankle Dorsiflexion': []
+        'Right Ankle Dorsiflexion': [],
+        'Left Ankle Dorsiflexion': []
     }
-
-    frame_count = 0  # Keep track of frames
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -48,24 +55,22 @@ if uploaded_video is not None:
         # If keypoints are detected
         if keypoints is not None:
             # Calculate angles for key joints
-            angles = calculate_joint_angles(keypoints)
+            joint_angles = calculate_joint_angles(keypoints)
 
             # Update joint angle data for the video
-            for joint, angle in angles.items():
+            for joint, angle in joint_angles.items():
                 joint_angle_data[joint].append(angle)
 
-            # Check if the current frame meets exercise form rules
-            violations = check_exercise_form(angles)
+            # Check if the current frame meets exercise form rules using exercise_rules utility
+            feedback = check_exercise_form(exercise_type, joint_angles)
 
-            # Display feedback based on the rules
-            if violations:
-                st.write(f"Form Issues Detected: {violations}")
+            # Process and display feedback
+            if feedback:
+                processed_feedback = feedback_manager.process_feedback(feedback)
+                st.write(f"Form Issues Detected: {processed_feedback}")
 
-            # Annotate and display frame with feedback
-            annotated_frame = frame  # You can implement this function to draw feedback on the frame
-            stframe.image(annotated_frame, channels="BGR")
-
-            frame_count += 1
+            # Display annotated frame (You can add annotations if needed)
+            stframe.image(frame, channels="BGR")
 
     # Release video resources
     cap.release()
@@ -76,3 +81,7 @@ if uploaded_video is not None:
     for joint, angles in joint_angle_data.items():
         if any(angles):
             plot_joint_angles(angles, joint)
+
+    # Display all accumulated feedback at the end (optional)
+    st.write("### Summary of All Form Feedback")
+    st.write(feedback_manager.get_all_feedback())
