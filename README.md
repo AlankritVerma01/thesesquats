@@ -43,5 +43,7 @@ streamlit run app.py
 ```
 
 ## Authors
+
 Alankrit Verma
+
 Borys Łangowicz
