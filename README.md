@@ -1,4 +1,4 @@
-# DeezSquats: Your Personal Fitness Coach
+# DeezSquats: Break PRs, not spines!
 
 💪 Tired of feeling stuck? 🏋️‍♀️ Ready to take control of your health and fitness without the risk of injury? DeezSquats is your personalized fitness coach, designed to make exercise safe, enjoyable, and accessible for everyone.
 
