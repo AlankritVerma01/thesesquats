@@ -30,6 +30,25 @@ def initialize_session_state():
         st.session_state['user_input'] = ''  # Initialize user_input
         st.session_state['ai_response'] = ''
         st.session_state['stop_live_exercise'] = False  # For stopping live exercise
+        st.session_state['last_played_audio'] = None
+        st.session_state['audio_placeholder'] = st.empty()
+
+def play_audio_feedback(feedback):
+    if feedback and feedback != st.session_state['last_played_audio']:
+        audio_map = {
+            "Keep your back straight": "voice/sentence_13.mp3",
+            "Bend your knees more": "voice/sentence_14.mp3",
+            "Extend your arms fully": "voice/sentence_9.mp3",
+            "Right elbow not detected": "voice/sentence_9.mp3",
+            "Left elbow not detected": "voice/sentence_10.mp3",
+            # Add more mappings as needed
+        }
+        
+        audio_file = audio_map.get(feedback)
+        if audio_file:
+            st.session_state['audio_placeholder'].empty()  # Clear previous audio
+            st.session_state['audio_placeholder'].audio(audio_file, format='audio/mp3')
+            st.session_state['last_played_audio'] = feedback
 
 # Function to handle sending messages
 def send_message():
@@ -226,51 +245,41 @@ def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, fee
     keypoints, results = get_keypoints_from_frame(frame, model)
     if keypoints is not None and any(kp is not None for kp in keypoints):
         joint_angles = calculate_joint_angles(keypoints)
-        joint_distances = calculate_joint_distances(keypoints)  # If needed
+        joint_distances = calculate_joint_distances(keypoints)
 
         if joint_angles:
-            # Clear the message placeholder
             message_placeholder.empty()
 
             for joint, angle in joint_angles.items():
                 joint_angle_data[joint].append(angle)
 
-            # Provide feedback at intervals
             if frame_count - last_feedback_frame >= feedback_frame_interval:
-                # Get the appropriate strategy
                 exercise_strategy = get_exercise_strategy(st.session_state['selected_exercise'])
                 violations = exercise_strategy.check_form(joint_angles, joint_distances)
 
-                # Update feedback manager
                 current_feedback = st.session_state['feedback_manager'].update_feedback(violations)
 
-                # Display current active feedback message
                 if current_feedback and current_feedback[0]:
                     feedback_text = "Form Issue Detected:\n" + current_feedback[0]
                     feedback_placeholder.write(feedback_text)
+                    play_audio_feedback(current_feedback[0])  # Play audio feedback
                 else:
-                    # Clear the feedback display if no active feedback
                     feedback_placeholder.empty()
 
                 last_feedback_frame = frame_count
         else:
             message_placeholder.write("Not enough keypoints detected to calculate joint angles.")
-            # Clear feedback as we cannot provide feedback without angles
             feedback_placeholder.empty()
 
-        # Visualize keypoints on the frame
         if results is not None and len(results) > 0 and hasattr(results[0], 'plot'):
             annotated_frame = results[0].plot()
-            # Convert back to BGR for display
             annotated_frame_bgr = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
             stframe.image(annotated_frame_bgr, channels="BGR")
         else:
             stframe.image(frame, channels="BGR")
     else:
         message_placeholder.write("No keypoints detected in the current frame.")
-        # Display the frame without annotations
         stframe.image(frame, channels="BGR")
-        # Clear feedback as we cannot provide feedback without keypoints
         feedback_placeholder.empty()
 
 def post_exercise_analysis(joint_angle_data):
