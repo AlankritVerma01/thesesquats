@@ -48,12 +48,41 @@ class ElevenLabsTextToSpeech:
 if __name__ == "__main__":
     API_KEY = os.getenv('API_KEY')
     
-    #tts = ElevenLabsTextToSpeech(API_KEY)
+    tts = ElevenLabsTextToSpeech(API_KEY)
 
-    # Optionally change voice
-    # tts.set_voice("9BWtsMINqrJLrRacOk9x")
-    
-    
-    # Usage in streamlit
-    # audio_stream = tts.synthesize_speech(text_input)
-    # st.audio(audio_stream, format="audio/mp3")
+    sentences = [
+        "Keep your spine straight, avoid bending forward or backward during the curl.",
+        "Avoid swinging your left shoulder during the curl.",
+        "Avoid swinging your right shoulder during the curl.",
+        "Ensure proper shoulder engagement on the right side.",
+        "Ensure proper shoulder engagement on the left side.",
+        "Avoid pushing your right knee too far over your toes.",
+        "Avoid pushing your left knee too far over your toes.",
+        "Keep your upper body straight during the lunge.",
+        "Ensure your right elbow is fully extended at the bottom of the pull-up.",
+        "Ensure your left elbow is fully extended at the bottom of the pull-up.",
+        "Ensure your right shoulder is fully engaged at the top of the pull-up.",
+        "Ensure your left shoulder is fully engaged at the top of the pull-up.",
+        "Keep your back straight during the push-up.",
+        "Keep your back straight during the squat.",
+        "Ensure your left hip bends to about 90 degrees during the squat.",
+        "Ensure your right hip bends to about 90 degrees during the squat."
+    ]
+
+    output_dir = "../voice/"
+    os.makedirs(output_dir, exist_ok=True)
+
+    for i, sentence in enumerate(sentences):
+        try:
+            audio_stream = tts.synthesize_speech(sentence)
+            output_file = os.path.join(output_dir, f"sentence_{i+1}.mp3")
+            
+            with open(output_file, "wb") as f:
+                f.write(audio_stream.getvalue())
+            
+            print(f"Generated audio for sentence {i+1} and saved to {output_file}")
+        except Exception as e:
+
+            print(f"Error generating audio for sentence {i+1}: {str(e)}")
+
+    print("Audio generation complete.") 
