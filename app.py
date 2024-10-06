@@ -201,7 +201,7 @@ def process_live_video():
         def recv(self, frame):
             try:
                 img = frame.to_ndarray(format="bgr24")
-
+                imp = st.camera_input("Capture Image", key="firstCamera", help="True")
                 # Flip the frame horizontally for a mirror effect
                 img = cv2.flip(img, 1)
 
