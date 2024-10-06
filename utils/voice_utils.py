@@ -5,7 +5,7 @@ import json
 import io
 import requests
 import streamlit as st
-
+import base64
 # Path to the mapping file
 MAPPING_FILE = 'feedback_audio_map.json'
 # Directory to store audio files
@@ -66,6 +66,16 @@ def sanitize_filename(text):
     sanitized = "".join(c for c in sanitized if c.isalnum() or c in ('_',))
     return sanitized[:50]  # Limit filename length
 
+def autoplay_audio(file_path: str):
+    with open(file_path, "rb") as f:
+        data = f.read()
+        b64 = base64.b64encode(data).decode()
+        md = f"""
+            <audio controls autoplay loop>
+            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            </audio>
+            """
+        st.markdown(md, unsafe_allow_html=True)
 def play_audio_feedback(feedback):
     if 'audio_placeholder' not in st.session_state:
         st.session_state['audio_placeholder'] = st.empty()
@@ -108,5 +118,6 @@ def play_audio_feedback(feedback):
     # Play the audio if it's different from the last played feedback
     if feedback != st.session_state['last_played_audio']:
         st.session_state['audio_placeholder'].empty()  # Clear previous audio
-        st.session_state['audio_placeholder'].audio(audio_filename, format='audio/mp3')
+        # st.session_state['audio_placeholder'].audio(audio_filename, format='audio/mp3')
+        autoplay_audio(audio_filename)
         st.session_state['last_played_audio'] = feedback
