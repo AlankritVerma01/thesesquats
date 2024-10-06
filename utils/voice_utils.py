@@ -81,7 +81,8 @@ def play_audio_feedback(feedback):
         # Generate the audio file using ElevenLabs API
         try:
             # Initialize the TTS API
-            API_KEY = os.getenv('ELEVENLABS_API_KEY')  # Ensure your API key is set
+            #API_KEY = os.getenv('ELEVENLABS_API_KEY')  # Ensure your API key is set
+            API_KEY = "sk_f658e8338c02622e5228bea687a989da86ebcf04f535038a"
             if not API_KEY:
                 st.write("Error: ElevenLabs API key is not set.")
                 return
