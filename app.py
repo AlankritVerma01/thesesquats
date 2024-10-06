@@ -165,7 +165,7 @@ def process_video(uploaded_video):
 
 def process_live_video():
     cap = cv2.VideoCapture(0)  # Capture from the webcam
-    stframe = st.empty()
+    stframe = st.empty() 
     feedback_placeholder = st.empty()
     message_placeholder = st.empty()  # Add message placeholder
 
@@ -212,7 +212,7 @@ def process_live_video():
                 st.session_state['stop_live_exercise'] = True
 
         cap.release()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
         # Post-processing steps
         post_exercise_analysis(joint_angle_data)
@@ -220,7 +220,7 @@ def process_live_video():
     except Exception as e:
         st.write(f"An error occurred during live video processing: {e}")
         cap.release()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
 def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe, message_placeholder):
     keypoints, results = get_keypoints_from_frame(frame, model)
