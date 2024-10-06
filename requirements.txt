@@ -4,3 +4,4 @@ pymongo
 ultralytics
 pyttsx3
 streamlit-webrtc==0.45.0
+av==10.0.0
