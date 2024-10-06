@@ -3,6 +3,8 @@ from strategies.squat_strategy import SquatStrategy
 from strategies.bench_press_strategy import BenchPressStrategy
 from strategies.easy_exercise_strategy import EasyExerciseStrategy  # Import the new strategy
 from strategies.exercise_context import ExerciseContext
+from strategies.bicep_curl_strategy import BicepCurlStrategy
+from strategies.lunge_strategy import LungeStrategy
 
 def get_exercise_strategy(exercise_type):
     """
@@ -16,6 +18,12 @@ def get_exercise_strategy(exercise_type):
         return BenchPressStrategy()
     elif exercise_type == 'Easy Exercise':  # Add the new easy exercise
         return EasyExerciseStrategy()
+    elif exercise_type == 'Squat':
+        return SquatStrategy()
+    elif exercise_type == 'Bicep Curl':
+        return BicepCurlStrategy()
+    elif exercise_type == 'Lunge':
+        return LungeStrategy()
     else:
         raise ValueError(f"Exercise type {exercise_type} is not supported")
 

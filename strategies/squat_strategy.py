@@ -1,35 +1,58 @@
 from strategies.exercise_strategy import ExerciseStrategy
 
 class SquatStrategy(ExerciseStrategy):
-    """
-    Strategy for analyzing squats.
-    """
-
     def check_form(self, joint_angles, joint_distances):
         """
-        Checks the squat form based on the knee, hip, and ankle angles.
+        Checks form during squats.
         """
         feedback = []
+        buffers = {
+            'knee_angle': 10,   # degrees
+            'hip_angle': 10,    # degrees
+            'spine_angle': 5    # degrees
+        }
 
-        # Check if knees are bending properly
-        if 'Right Knee' in joint_angles and joint_angles['Right Knee'] > 160:
-            feedback.append("Bend your right knee more to get full depth on the squat.")
+        # Knee angle should be around 90 degrees at the bottom
+        right_knee_angle = joint_angles.get('Right Knee')
+        left_knee_angle = joint_angles.get('Left Knee')
+        target_knee_angle = 90
 
-        if 'Left Knee' in joint_angles and joint_angles['Left Knee'] > 160:
-            feedback.append("Bend your left knee more to get full depth on the squat.")
+        if right_knee_angle:
+            if abs(right_knee_angle - target_knee_angle) > buffers['knee_angle']:
+                feedback.append("Try to bend your right knee to about 90 degrees when squatting.")
+        else:
+            feedback.append("Right knee not detected.")
 
-        # Check if hips are lowering sufficiently (hip angles)
-        if 'Right Hip' in joint_angles and joint_angles['Right Hip'] > 90:
-            feedback.append("Lower your right hip to get deeper in the squat.")
+        if left_knee_angle:
+            if abs(left_knee_angle - target_knee_angle) > buffers['knee_angle']:
+                feedback.append("Try to bend your left knee to about 90 degrees when squatting.")
+        else:
+            feedback.append("Left knee not detected.")
 
-        if 'Left Hip' in joint_angles and joint_angles['Left Hip'] > 90:
-            feedback.append("Lower your left hip to get deeper in the squat.")
+        # Hip angle should also be around 90 degrees
+        right_hip_angle = joint_angles.get('Right Hip')
+        left_hip_angle = joint_angles.get('Left Hip')
+        target_hip_angle = 90
 
-        # Check ankle dorsiflexion for flexibility (should be less than a certain angle)
-        if 'Right Ankle Dorsiflexion' in joint_angles and joint_angles['Right Ankle Dorsiflexion'] < 10:
-            feedback.append("Improve ankle mobility for a better squat depth (Right).")
+        if right_hip_angle:
+            if abs(right_hip_angle - target_hip_angle) > buffers['hip_angle']:
+                feedback.append("Ensure your right hip bends to about 90 degrees during the squat.")
+        else:
+            feedback.append("Right hip not detected.")
 
-        if 'Left Ankle Dorsiflexion' in joint_angles and joint_angles['Left Ankle Dorsiflexion'] < 10:
-            feedback.append("Improve ankle mobility for a better squat depth (Left).")
+        if left_hip_angle:
+            if abs(left_hip_angle - target_hip_angle) > buffers['hip_angle']:
+                feedback.append("Ensure your left hip bends to about 90 degrees during the squat.")
+        else:
+            feedback.append("Left hip not detected.")
+
+        # Spine should remain relatively straight
+        spine_angle = joint_angles.get('Spine Angle')
+        target_spine_angle = 180  # Straight line
+        if spine_angle:
+            if abs(spine_angle - target_spine_angle) > buffers['spine_angle']:
+                feedback.append("Keep your back straight during the squat.")
+        else:
+            feedback.append("Spine angle not detected.")
 
         return feedback

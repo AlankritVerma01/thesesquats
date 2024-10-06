@@ -10,7 +10,7 @@ from utils.feedback_utils import FeedbackManager
 from utils.chat_utils import get_ai_recommendation
 
 # List of available exercises (strategies)
-available_exercises = ['Pull-up', 'Squat', 'Bench Press', 'Easy Exercise']
+available_exercises = ['Push-up', 'Squat', 'Bicep Curl', 'Lunge', 'Easy Exercise']
 
 # Load YOLO model
 model = get_model()
