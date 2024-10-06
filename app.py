@@ -260,11 +260,13 @@ def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, fee
                 current_feedback = st.session_state['feedback_manager'].update_feedback(violations)
 
                 if current_feedback and current_feedback[0]:
-                    feedback_text = "Form Issue Detected:\n" + current_feedback[0]
+                    latest_feedback = current_feedback[-1]
+                    feedback_text = "Form Issue Detected:\n" + latest_feedback
                     feedback_placeholder.write(feedback_text)
-                    play_audio_feedback(current_feedback[0])  # Play audio feedback
+                    play_audio_feedback(latest_feedback)  # Play audio feedback
                 else:
                     feedback_placeholder.empty()
+                    play_audio_feedback(None)  # Stop audio feedback
 
                 last_feedback_frame = frame_count
         else:

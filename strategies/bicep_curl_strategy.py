@@ -7,9 +7,9 @@ class BicepCurlStrategy(ExerciseStrategy):
         """
         feedback = []
         buffers = {
-            'elbow_angle': 10,   # degrees
-            'shoulder_angle': 15, # degrees
-            'spine_angle': 30 # degrees
+            'elbow_angle': 20,   # degrees
+            'shoulder_angle': 40, # degrees
+            'spine_angle': 10 # degrees
         }
 
         # Elbow angle should move from near 180 degrees (arm extended) to about 30 degrees (arm curled)
@@ -22,7 +22,8 @@ class BicepCurlStrategy(ExerciseStrategy):
             elif right_elbow_angle < (30 + buffers['elbow_angle']):
                 feedback.append("Curl your right arm up to about 30 degrees.")
         else:
-            feedback.append("Right elbow not detected.")
+            pass
+            # feedback.append("Right elbow not detected.")
 
         if left_elbow_angle:
             if left_elbow_angle > (180 - buffers['elbow_angle']):
@@ -30,7 +31,8 @@ class BicepCurlStrategy(ExerciseStrategy):
             elif left_elbow_angle < (30 + buffers['elbow_angle']):
                 feedback.append("Curl your left arm up to about 30 degrees.")
         else:
-            feedback.append("Left elbow not detected.")
+            pass
+            # feedback.append("Left elbow not detected.")
 
         # Shoulder should remain relatively stable
         right_shoulder_angle = joint_angles.get('Right Shoulder Flexion')
@@ -41,13 +43,15 @@ class BicepCurlStrategy(ExerciseStrategy):
             if abs(right_shoulder_angle - target_shoulder_angle) > buffers['shoulder_angle']:
                 feedback.append("Avoid swinging your right shoulder during the curl.")
         else:
-            feedback.append("Right shoulder not detected.")
+            pass
+            # feedback.append("Right shoulder not detected.")
 
         if left_shoulder_angle:
             if abs(left_shoulder_angle - target_shoulder_angle) > buffers['shoulder_angle']:
                 feedback.append("Avoid swinging your left shoulder during the curl.")
         else:
-            feedback.append("Left shoulder not detected.")
+            pass
+            # feedback.append("Left shoulder not detected.")
 
         # Spine should remain straight
         spine_angle = joint_angles.get('Spine Angle')
@@ -57,6 +61,7 @@ class BicepCurlStrategy(ExerciseStrategy):
             if abs(spine_angle - target_spine_angle) > buffers['spine_angle']:
                 feedback.append("Keep your spine straight, avoid bending forward or backward during the curl.")
         else:
-            feedback.append("Spine angle not detected.")
+            pass
+            # feedback.append("Spine angle not detected.")
 
         return feedback

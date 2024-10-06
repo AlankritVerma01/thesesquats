@@ -6,6 +6,7 @@ import io
 import requests
 import streamlit as st
 import base64
+
 # Path to the mapping file
 MAPPING_FILE = 'feedback_audio_map.json'
 # Directory to store audio files
@@ -24,14 +25,6 @@ class ElevenLabsTextToSpeech:
 
     def set_voice(self, voice_id):
         self.voice_id = voice_id
-
-    def get_voices(self):
-        endpoint = f"{self.base_url}/voices"
-        response = requests.get(endpoint, headers=self.headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise Exception(f"Failed to get voices: {response.text}")
 
     def synthesize_speech(self, text, model_id="eleven_monolingual_v1"):
         endpoint = f"{self.base_url}/text-to-speech/{self.voice_id}/stream"
@@ -66,58 +59,66 @@ def sanitize_filename(text):
     sanitized = "".join(c for c in sanitized if c.isalnum() or c in ('_',))
     return sanitized[:50]  # Limit filename length
 
-def autoplay_audio(file_path: str):
+def autoplay_audio(file_path: str, placeholder):
     with open(file_path, "rb") as f:
         data = f.read()
         b64 = base64.b64encode(data).decode()
         md = f"""
-            <audio controls autoplay loop>
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            <audio autoplay loop>
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
             </audio>
             """
-        st.markdown(md, unsafe_allow_html=True)
+    placeholder.markdown(md, unsafe_allow_html=True)
+
 def play_audio_feedback(feedback):
     if 'audio_placeholder' not in st.session_state:
         st.session_state['audio_placeholder'] = st.empty()
     if 'last_played_audio' not in st.session_state:
         st.session_state['last_played_audio'] = None
 
-    feedback_audio_map = load_feedback_audio_map()
+    # If feedback is None or empty, stop any playing audio
+    if not feedback:
+        if st.session_state['last_played_audio'] is not None:
+            st.session_state['audio_placeholder'].empty()
+            st.session_state['last_played_audio'] = None
+        return
 
-    # Check if the feedback message is already in the mapping
-    audio_file = feedback_audio_map.get(feedback)
-
-    if not audio_file or not os.path.exists(audio_file):
-        # Generate the audio file using ElevenLabs API
-        try:
-            # Initialize the TTS API
-            #API_KEY = os.getenv('ELEVENLABS_API_KEY')  # Ensure your API key is set
-            API_KEY = "sk_f658e8338c02622e5228bea687a989da86ebcf04f535038a"
-            if not API_KEY:
-                st.write("Error: ElevenLabs API key is not set.")
-                return
-            tts = ElevenLabsTextToSpeech(API_KEY)
-            # Generate the audio
-            audio_stream = tts.synthesize_speech(feedback)
-            # Save the audio file
-            sanitized_feedback = sanitize_filename(feedback)
-            audio_filename = os.path.join(AUDIO_DIR, f"{sanitized_feedback}.mp3")
-            os.makedirs(os.path.dirname(audio_filename), exist_ok=True)
-            with open(audio_filename, 'wb') as f:
-                f.write(audio_stream.getvalue())
-            # Update the mapping
-            feedback_audio_map[feedback] = audio_filename
-            save_feedback_audio_map(feedback_audio_map)
-        except Exception as e:
-            st.write(f"Error generating audio for feedback: {feedback}. Error: {str(e)}")
-            return  # Exit the function if there's an error
-    else:
-        # Audio file exists, proceed to play
-        audio_filename = audio_file
-
-    # Play the audio if it's different from the last played feedback
+    # If feedback has changed, update the audio
     if feedback != st.session_state['last_played_audio']:
-        st.session_state['audio_placeholder'].empty()  # Clear previous audio
-        # st.session_state['audio_placeholder'].audio(audio_filename, format='audio/mp3')
-        autoplay_audio(audio_filename)
+        st.session_state['audio_placeholder'].empty()
+        # Get or generate the audio file for the feedback
+        feedback_audio_map = load_feedback_audio_map()
+        audio_file = feedback_audio_map.get(feedback)
+
+        if not audio_file or not os.path.exists(audio_file):
+            # Generate the audio file using ElevenLabs API
+            try:
+                API_KEY = st.secrets["elevenlabs_api_key"]
+                if not API_KEY:
+                    st.write("Error: ElevenLabs API key is not set.")
+                    return
+                tts = ElevenLabsTextToSpeech(API_KEY)
+                # Generate the audio
+                audio_stream = tts.synthesize_speech(feedback)
+                # Save the audio file
+                sanitized_feedback = sanitize_filename(feedback)
+                audio_filename = os.path.join(AUDIO_DIR, f"{sanitized_feedback}.mp3")
+                os.makedirs(os.path.dirname(audio_filename), exist_ok=True)
+                with open(audio_filename, 'wb') as f:
+                    f.write(audio_stream.getvalue())
+                # Update the mapping
+                feedback_audio_map[feedback] = audio_filename
+                save_feedback_audio_map(feedback_audio_map)
+            except Exception as e:
+                st.write(f"Error generating audio for feedback: {feedback}. Error: {str(e)}")
+                return
+        else:
+            # Audio file exists
+            audio_filename = audio_file
+
+        # Play the audio on loop
+        autoplay_audio(audio_filename, st.session_state['audio_placeholder'])
         st.session_state['last_played_audio'] = feedback
+    else:
+        # Feedback is the same, do nothing (audio continues to loop)
+        pass
