@@ -3,3 +3,4 @@ opencv-python-headless
 pymongo
 ultralytics
 pyttsx3
+streamlit-webrtc==0.45.0

@@ -8,6 +8,9 @@ from utils.video_utils import save_video, plot_joint_angles
 from utils.exercise_rules import check_exercise_form, get_exercise_strategy
 from utils.feedback_utils import FeedbackManager
 from utils.chat_utils import get_ai_recommendation
+import av
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration
+
 
 # List of available exercises (strategies)
 available_exercises = ['Push-up', 'Squat', 'Bicep Curl', 'Lunge', 'Easy Exercise']
@@ -164,13 +167,9 @@ def process_video(uploaded_video):
         cv2.destroyAllWindows()
 
 def process_live_video():
-    cap = cv2.VideoCapture(0)  # Capture from the webcam
     stframe = st.empty()
     feedback_placeholder = st.empty()
     message_placeholder = st.empty()  # Add message placeholder
-
-    # **Add a 'Stop' button**
-    stop_button = st.button("Stop Live Exercise", key='stop_live_exercise_button')
 
     # Joint angle data storage
     joint_angle_data = {joint: [] for joint in [
@@ -186,41 +185,84 @@ def process_live_video():
     frame_count = 0
     last_feedback_frame = 0
 
-    try:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                st.write("Failed to capture frame from camera.")
-                break
+    # WebRTC configuration
+    RTC_CONFIGURATION = RTCConfiguration(
+        {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    )
+
+    class VideoProcessor(VideoProcessorBase):
+        def __init__(self):
+            self.model = model
+            self.frame_count = 0
+            self.last_feedback_frame = 0
+
+        def recv(self, frame):
+            img = frame.to_ndarray(format="bgr24")
 
             # Flip the frame horizontally for a mirror effect
-            frame = cv2.flip(frame, 1)
+            img = cv2.flip(img, 1)
 
-            process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe, message_placeholder)
-            frame_count += 1
+            # Process frame
+            keypoints, results = get_keypoints_from_frame(img, self.model)
+            if keypoints is not None and any(kp is not None for kp in keypoints):
+                joint_angles = calculate_joint_angles(keypoints)
 
-            # Add a small delay
-            time.sleep(1 / frame_rate)
+                if joint_angles:
+                    # Clear the message placeholder
+                    message_placeholder.empty()
 
-            # Check if 'Stop' button is pressed
-            if st.session_state.get('stop_live_exercise'):
-                st.session_state['stop_live_exercise'] = False  # Reset the flag
-                break
+                    for joint, angle in joint_angles.items():
+                        joint_angle_data[joint].append(angle)
 
-            # Check for 'Stop Live Exercise' button press
-            if stop_button:
-                st.session_state['stop_live_exercise'] = True
+                    # Provide feedback at intervals
+                    if self.frame_count - self.last_feedback_frame >= feedback_frame_interval:
+                        violations = check_exercise_form(st.session_state['selected_exercise'], joint_angles)
+                        # Update feedback manager
+                        current_feedback = st.session_state['feedback_manager'].update_feedback(violations)
+                        # Display current active feedback messages
+                        if current_feedback:
+                            feedback_text = "Form Issues Detected:\n" + "\n".join(current_feedback)
+                            feedback_placeholder.write(feedback_text)
+                        else:
+                            # Clear the feedback display if no active feedback
+                            feedback_placeholder.empty()
+                        self.last_feedback_frame = self.frame_count
+                else:
+                    message_placeholder.write("Not enough keypoints detected to calculate joint angles.")
+                    # Clear feedback as we cannot provide feedback without angles
+                    feedback_placeholder.empty()
 
-        cap.release()
-        cv2.destroyAllWindows()
+                # Visualize keypoints on the frame
+                if results is not None and len(results) > 0 and hasattr(results[0], 'plot'):
+                    annotated_frame = results[0].plot()
+                    annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
+                else:
+                    annotated_frame = img
+            else:
+                message_placeholder.write("No keypoints detected in the current frame.")
+                # Display the frame without annotations
+                annotated_frame = img
+                # Clear feedback as we cannot provide feedback without keypoints
+                feedback_placeholder.empty()
 
-        # Post-processing steps
-        post_exercise_analysis(joint_angle_data)
+            self.frame_count += 1
 
-    except Exception as e:
-        st.write(f"An error occurred during live video processing: {e}")
-        cap.release()
-        cv2.destroyAllWindows()
+            return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
+
+    webrtc_ctx = webrtc_streamer(
+        key="exercise",
+        mode=WebRtcMode.SENDRECV,
+        rtc_configuration=RTC_CONFIGURATION,
+        media_stream_constraints={"video": True, "audio": False},
+        video_processor_factory=VideoProcessor,
+        async_processing=True,
+    )
+
+    if webrtc_ctx.state.playing:
+        st.write("Live exercise started. Perform your exercise in front of the camera.")
+    else:
+        st.write("Click on 'Start' to begin live exercise.")
+
 
 def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe, message_placeholder):
     keypoints, results = get_keypoints_from_frame(frame, model)
