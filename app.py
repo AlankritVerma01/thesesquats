@@ -8,6 +8,7 @@ from utils.video_utils import save_video, plot_joint_angles
 from utils.exercise_rules import check_exercise_form, get_exercise_strategy
 from utils.feedback_utils import FeedbackManager
 from utils.chat_utils import get_ai_recommendation
+from utils.voice_utils import play_audio_feedback
 
 # List of available exercises (strategies)
 available_exercises = ['push-up', 'squat', 'bicep curl', 'lunge', 'overhead press', 'easy exercise']
@@ -30,25 +31,24 @@ def initialize_session_state():
         st.session_state['user_input'] = ''  # Initialize user_input
         st.session_state['ai_response'] = ''
         st.session_state['stop_live_exercise'] = False  # For stopping live exercise
-        st.session_state['last_played_audio'] = None
-        st.session_state['audio_placeholder'] = st.empty()
 
-def play_audio_feedback(feedback):
-    if feedback and feedback != st.session_state['last_played_audio']:
-        audio_map = {
-            "Keep your back straight": "voice/sentence_13.mp3",
-            "Bend your knees more": "voice/sentence_14.mp3",
-            "Extend your arms fully": "voice/sentence_9.mp3",
-            "Right elbow not detected": "voice/sentence_9.mp3",
-            "Left elbow not detected": "voice/sentence_10.mp3",
-            # Add more mappings as needed
-        }
+
+# def play_audio_feedback(feedback):
+#     if feedback and feedback != st.session_state['last_played_audio']:
+#         audio_map = {
+#             "Keep your back straight": "voice/sentence_13.mp3",
+#             "Bend your knees more": "voice/sentence_14.mp3",
+#             "Extend your arms fully": "voice/sentence_9.mp3",
+#             "Right elbow not detected": "voice/sentence_9.mp3",
+#             "Left elbow not detected": "voice/sentence_10.mp3",
+#             # Add more mappings as needed
+#         }
         
-        audio_file = audio_map.get(feedback)
-        if audio_file:
-            st.session_state['audio_placeholder'].empty()  # Clear previous audio
-            st.session_state['audio_placeholder'].audio(audio_file, format='audio/mp3')
-            st.session_state['last_played_audio'] = feedback
+#         audio_file = audio_map.get(feedback)
+#         if audio_file:
+#             st.session_state['audio_placeholder'].empty()  # Clear previous audio
+#             st.session_state['audio_placeholder'].audio(audio_file, format='audio/mp3')
+#             st.session_state['last_played_audio'] = feedback
 
 # Function to handle sending messages
 def send_message():
