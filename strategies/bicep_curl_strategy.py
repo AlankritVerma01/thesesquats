@@ -9,7 +9,7 @@ class BicepCurlStrategy(ExerciseStrategy):
         buffers = {
             'elbow_angle': 10,   # degrees
             'shoulder_angle': 15, # degrees
-            'spine_angle': 10 # degrees
+            'spine_angle': 30 # degrees
         }
 
         # Elbow angle should move from near 180 degrees (arm extended) to about 30 degrees (arm curled)

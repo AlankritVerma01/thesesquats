@@ -3,14 +3,14 @@ import cv2
 import random
 import time  # For sleep in live video processing
 from utils.model_utils import get_model, get_keypoints_from_frame
-from utils.angle_utils import calculate_joint_angles
+from utils.angle_utils import calculate_joint_angles, calculate_joint_distances
 from utils.video_utils import save_video, plot_joint_angles
 from utils.exercise_rules import check_exercise_form, get_exercise_strategy
 from utils.feedback_utils import FeedbackManager
 from utils.chat_utils import get_ai_recommendation
 
 # List of available exercises (strategies)
-available_exercises = ['Push-up', 'Squat', 'Bicep Curl', 'Lunge', 'Easy Exercise']
+available_exercises = ['Push-up', 'Squat', 'Bicep Curl', 'Lunge', 'Overhead Press', 'Easy Exercise']
 
 # Load YOLO model
 model = get_model()
@@ -212,7 +212,7 @@ def process_live_video():
                 st.session_state['stop_live_exercise'] = True
 
         cap.release()
-        # cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
 
         # Post-processing steps
         post_exercise_analysis(joint_angle_data)
@@ -220,12 +220,13 @@ def process_live_video():
     except Exception as e:
         st.write(f"An error occurred during live video processing: {e}")
         cap.release()
-        # cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
 
 def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe, message_placeholder):
     keypoints, results = get_keypoints_from_frame(frame, model)
     if keypoints is not None and any(kp is not None for kp in keypoints):
         joint_angles = calculate_joint_angles(keypoints)
+        joint_distances = calculate_joint_distances(keypoints)  # If needed
 
         if joint_angles:
             # Clear the message placeholder
@@ -236,16 +237,21 @@ def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, fee
 
             # Provide feedback at intervals
             if frame_count - last_feedback_frame >= feedback_frame_interval:
-                violations = check_exercise_form(st.session_state['selected_exercise'], joint_angles)
+                # Get the appropriate strategy
+                exercise_strategy = get_exercise_strategy(st.session_state['selected_exercise'])
+                violations = exercise_strategy.check_form(joint_angles, joint_distances)
+
                 # Update feedback manager
                 current_feedback = st.session_state['feedback_manager'].update_feedback(violations)
-                # Display current active feedback messages
-                if current_feedback:
-                    feedback_text = "Form Issues Detected:\n" + "\n".join(current_feedback)
+
+                # Display current active feedback message
+                if current_feedback and current_feedback[0]:
+                    feedback_text = "Form Issue Detected:\n" + current_feedback[0]
                     feedback_placeholder.write(feedback_text)
                 else:
                     # Clear the feedback display if no active feedback
                     feedback_placeholder.empty()
+
                 last_feedback_frame = frame_count
         else:
             message_placeholder.write("Not enough keypoints detected to calculate joint angles.")

@@ -1,10 +1,12 @@
+from strategies.exercise_context import ExerciseContext
 from strategies.pullup_strategy import PullUpStrategy
 from strategies.squat_strategy import SquatStrategy
 from strategies.bench_press_strategy import BenchPressStrategy
 from strategies.easy_exercise_strategy import EasyExerciseStrategy  # Import the new strategy
-from strategies.exercise_context import ExerciseContext
+
 from strategies.bicep_curl_strategy import BicepCurlStrategy
 from strategies.lunge_strategy import LungeStrategy
+from strategies.overhead_press_strategy import OverheadPressStrategy
 
 def get_exercise_strategy(exercise_type):
     """
@@ -24,6 +26,8 @@ def get_exercise_strategy(exercise_type):
         return BicepCurlStrategy()
     elif exercise_type == 'Lunge':
         return LungeStrategy()
+    elif exercise_type == 'Overhead Press':
+        return OverheadPressStrategy()
     else:
         raise ValueError(f"Exercise type {exercise_type} is not supported")
 
