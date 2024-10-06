@@ -11,7 +11,7 @@ def get_keypoints_from_frame(frame, model):
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = model(frame_rgb)
 
-    if results and results[0].keypoints is not None:
+    if results is not None and len(results) > 0 and results[0].keypoints is not None:
         keypoints_data = results[0].keypoints.data[0]  # Assuming single person detection
         num_keypoints = keypoints_data.shape[0]
 
@@ -24,9 +24,10 @@ def get_keypoints_from_frame(frame, model):
         # Fill in detected keypoints
         for idx in range(min(num_keypoints, expected_num_keypoints)):
             keypoints[idx] = keypoints_data[idx]
-
-        return keypoints
+        # print("Detected keypoints:", keypoints_data)
+        return keypoints, results
     else:
         # Return an array of Nones if no keypoints are detected
-        expected_num_keypoints = 17  # Adjust based on your model
-        return [None] * expected_num_keypoints
+        expected_num_keypoints = 20  # Adjust based on your model
+        keypoints = [None] * expected_num_keypoints
+        return keypoints, results  # Return results even if None

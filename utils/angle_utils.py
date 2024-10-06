@@ -31,6 +31,7 @@ def is_valid_keypoint(keypoint):
     return not (x == 0 and y == 0)
 
 def calculate_joint_angles(keypoints):
+    # print("KEYPOINTS FROM ANGLES:", keypoints)
     """
     Calculate angles for all key joints based on the detected keypoints.
     Returns a dictionary with joint names as keys and their calculated angles as values.
@@ -93,7 +94,7 @@ def calculate_joint_angles(keypoints):
 
     # Right Ankle Dorsiflexion (knee, ankle, toes)
     # Add checks if you have toe keypoints; otherwise, comment out or adjust
-
+    # print(joint_angles)
     return joint_angles
 
 def calculate_distance(point1, point2):

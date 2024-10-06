@@ -1,13 +1,13 @@
 import streamlit as st
 import cv2
 import random
+import time  # For sleep in live video processing
 from utils.model_utils import get_model, get_keypoints_from_frame
 from utils.angle_utils import calculate_joint_angles
 from utils.video_utils import save_video, plot_joint_angles
 from utils.exercise_rules import check_exercise_form, get_exercise_strategy
 from utils.feedback_utils import FeedbackManager
 from utils.chat_utils import get_ai_recommendation
-import time
 
 # List of available exercises (strategies)
 available_exercises = ['Pull-up', 'Squat', 'Bench Press', 'Easy Exercise']
@@ -100,14 +100,13 @@ def exercise_selection():
         st.session_state['selected_exercise'] = selected_exercise
         st.session_state['exercise_mode'] = 'video_analysis'
 
-# Video Upload and Exercise Analysis
 def video_analysis():
     st.write(f"Current Exercise: {st.session_state['selected_exercise']}")
 
     # Reset the feedback manager at the start of a new analysis
     st.session_state['feedback_manager'].reset_feedback()
 
-    # **Option to choose input method**
+    # Option to choose input method
     input_method = st.radio("Choose Input Method:", ('Upload Video', 'Live Exercise'), key='input_method')
 
     if input_method == 'Upload Video':
@@ -127,6 +126,7 @@ def process_video(uploaded_video):
     cap = cv2.VideoCapture(video_path)
     stframe = st.empty()
     feedback_placeholder = st.empty()
+    message_placeholder = st.empty()  # Add message placeholder
 
     # Joint angle data storage
     joint_angle_data = {joint: [] for joint in [
@@ -149,7 +149,7 @@ def process_video(uploaded_video):
                 st.write("Video ended or failed to read.")
                 break
 
-            process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe)
+            process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_interval_seconds, feedback_placeholder, stframe, message_placeholder)
             frame_count += 1
 
         cap.release()
@@ -167,66 +167,70 @@ def process_live_video():
     cap = cv2.VideoCapture(0)  # Capture from the webcam
     stframe = st.empty()
     feedback_placeholder = st.empty()
-    
+    message_placeholder = st.empty()  # Add message placeholder
+
     # **Add a 'Stop' button**
     stop_button = st.button("Stop Live Exercise", key='stop_live_exercise_button')
-    
+
     # Joint angle data storage
     joint_angle_data = {joint: [] for joint in [
         'Right Elbow', 'Left Elbow', 'Right Knee', 'Left Knee',
         'Right Hip', 'Left Hip', 'Right Shoulder Flexion', 'Left Shoulder Flexion',
         'Spine Angle', 'Right Ankle Dorsiflexion', 'Left Ankle Dorsiflexion'
     ]}
-    
+
     frame_rate = 10  # Lower frame rate for processing
     feedback_interval_seconds = 0.5
     feedback_frame_interval = int(frame_rate * feedback_interval_seconds)
-    
+
     frame_count = 0
     last_feedback_frame = 0
-    
+
     try:
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 st.write("Failed to capture frame from camera.")
                 break
-            
+
             # Flip the frame horizontally for a mirror effect
             frame = cv2.flip(frame, 1)
-            
-            process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe)
+
+            process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe, message_placeholder)
             frame_count += 1
-            
+
             # Add a small delay
             time.sleep(1 / frame_rate)
-            
+
             # Check if 'Stop' button is pressed
             if st.session_state.get('stop_live_exercise'):
                 st.session_state['stop_live_exercise'] = False  # Reset the flag
                 break
-            
+
             # Check for 'Stop Live Exercise' button press
             if stop_button:
                 st.session_state['stop_live_exercise'] = True
-        
+
         cap.release()
         cv2.destroyAllWindows()
-        
+
         # Post-processing steps
         post_exercise_analysis(joint_angle_data)
-    
+
     except Exception as e:
         st.write(f"An error occurred during live video processing: {e}")
         cap.release()
         cv2.destroyAllWindows()
 
-def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe):
-    keypoints = get_keypoints_from_frame(frame, model)
-    if keypoints is not None:
+def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, feedback_frame_interval, feedback_placeholder, stframe, message_placeholder):
+    keypoints, results = get_keypoints_from_frame(frame, model)
+    if keypoints is not None and any(kp is not None for kp in keypoints):
         joint_angles = calculate_joint_angles(keypoints)
 
         if joint_angles:
+            # Clear the message placeholder
+            message_placeholder.empty()
+
             for joint, angle in joint_angles.items():
                 joint_angle_data[joint].append(angle)
 
@@ -244,20 +248,24 @@ def process_frame(frame, joint_angle_data, frame_count, last_feedback_frame, fee
                     feedback_placeholder.empty()
                 last_feedback_frame = frame_count
         else:
-            # No joint angles could be calculated
-            st.write("Not enough keypoints detected to calculate joint angles.")
+            message_placeholder.write("Not enough keypoints detected to calculate joint angles.")
             # Clear feedback as we cannot provide feedback without angles
             feedback_placeholder.empty()
 
-        annotated_frame = frame  # You can add code to annotate the frame if needed
-        stframe.image(annotated_frame, channels="BGR")
+        # Visualize keypoints on the frame
+        if results is not None and len(results) > 0 and hasattr(results[0], 'plot'):
+            annotated_frame = results[0].plot()
+            # Convert back to BGR for display
+            annotated_frame_bgr = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
+            stframe.image(annotated_frame_bgr, channels="BGR")
+        else:
+            stframe.image(frame, channels="BGR")
     else:
-        st.write("No keypoints detected in the current frame.")
+        message_placeholder.write("No keypoints detected in the current frame.")
         # Display the frame without annotations
         stframe.image(frame, channels="BGR")
         # Clear feedback as we cannot provide feedback without keypoints
         feedback_placeholder.empty()
-
 
 def post_exercise_analysis(joint_angle_data):
     # Plot joint angles over time
