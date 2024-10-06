@@ -10,7 +10,7 @@ from utils.feedback_utils import FeedbackManager
 from utils.chat_utils import get_ai_recommendation
 
 # List of available exercises (strategies)
-available_exercises = ['Push-up', 'Squat', 'Bicep Curl', 'Lunge', 'Overhead Press', 'Easy Exercise']
+available_exercises = ['push-up', 'squat', 'bicep curl', 'lunge', 'overhead press', 'easy exercise']
 
 # Load YOLO model
 model = get_model()
@@ -94,7 +94,7 @@ def ai_chat_interaction():
         # Follow AI's recommendation
         with col1:
             if st.button(f"Do {st.session_state['recommended_exercise']}", key='follow_ai'):
-                if st.session_state['recommended_exercise'] in available_exercises:
+                if st.session_state['recommended_exercise'].lower() in available_exercises:
                     st.session_state['selected_exercise'] = st.session_state['recommended_exercise']
                     st.session_state['exercise_mode'] = 'video_analysis'  # Move to video analysis
                 else:

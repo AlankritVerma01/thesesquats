@@ -12,21 +12,19 @@ def get_exercise_strategy(exercise_type):
     """
     Return the appropriate exercise strategy based on the selected exercise type.
     """
-    if exercise_type == 'Pull-up':
+    if exercise_type.lower() == 'pull-up'.lower():
         return PullUpStrategy()
-    elif exercise_type == 'Squat':
+    elif exercise_type.lower() == 'squat'.lower():
         return SquatStrategy()
-    elif exercise_type == 'Bench Press':
+    elif exercise_type.lower() == 'bench press'.lower():
         return BenchPressStrategy()
-    elif exercise_type == 'Easy Exercise':  # Add the new easy exercise
+    elif exercise_type.lower() == 'easy exercise'.lower():  # Add the new easy exercise
         return EasyExerciseStrategy()
-    elif exercise_type == 'Squat':
-        return SquatStrategy()
-    elif exercise_type == 'Bicep Curl':
+    elif exercise_type.lower() == 'bicep curl'.lower():
         return BicepCurlStrategy()
-    elif exercise_type == 'Lunge':
+    elif exercise_type.lower() == 'lunge'.lower():
         return LungeStrategy()
-    elif exercise_type == 'Overhead Press':
+    elif exercise_type.lower() == 'overhead press'.lower():
         return OverheadPressStrategy()
     else:
         raise ValueError(f"Exercise type {exercise_type} is not supported")
